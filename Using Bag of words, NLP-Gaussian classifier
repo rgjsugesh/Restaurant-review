@@ -1,0 +1,42 @@
+import pandas as pd 
+import numpy as np
+import matplotlib.pyplot as plt
+import nltk
+import re
+dataset = pd.read_csv("Restaurant_Reviews.tsv", delimiter = "\t", quoting =3)
+# Here the dataset is of tsv (tab spaced values) file so we need to change the default delimiter from \c to \t
+#and here there may be quotations used in the sentence we can remove that by having quotations to 3
+nltk.download("stopwords") #words like I,he,him,you,they, them will not contribute to the predictions so these stopwaords are removed. GC doesnt have it so downloading
+from nltk.corpus import stopwords #corpus means words so the stopwords are imported to GC
+from nltk.stem.porter import PorterStemmer #to convert the words to base words like loves or loved to love and worst to bad
+corpus = [] #to collect the cleaned words
+#lets assume there are 1000 reviewes
+for i in range(0, 1000):
+  review = re.sub('^a-zA-Z',' ',dataset['Review'][i])#other than alphabets we replace it to tab space
+  review = review.lower()#converting all text to lower case inorder to remove duplicates
+  review = review.split()#splitting the words so that stemming canbe done
+  allstopwords = stopwords.words("english")#to collect all stopwords from english dictionary
+  allstopwords.remove("not") #not is also considered as stopword but for a restaurant review prediction it is important
+  ps = PorterStemmer()
+  review = [ps.stem(word) for word in review if not word in set(allstopwords)]#stemming the words after removing the stopwords in it
+  review =" ".join(review)#joining the stemmed words with space
+  corpus.append(review)#cleaned text useful for reviewing is obtained
+from sklearn.feature_extraction.text import CountVectorizer #we are going to get unique words
+cv = CountVectorizer(max_features = 1500) #set to 1500 as its the standard no.of words used by humans
+X = cv.fit_transform(corpus).toarray() #2D array conversion
+y = dataset.iloc[:,-1].values #obtain the annotated review values
+from sklearn.model_selection import train_test_split #splitting the data into test and train 80/20 ratio
+X_train,X_test,y_train,y_test = train_test_split(X,y,test_size = 0.2, random_state = 0)
+from sklearn.naive_bayes import GaussianNB # using Gaussian NB classifier
+classifier = GaussianNB()
+classifier.fit(X_train,y_train)
+y_pred = classifier.predict(X_test)
+from sklearn.metrics import accuracy_score,f1_score,precision_score,roc_auc_score, confusion_matrix
+cm = confusion_matrix(y_test,y_pred)
+
+asc = accuracy_score(y_test,y_pred)
+f1 = f1_score(y_test,y_pred)
+prs =precision_score(y_test,y_pred)
+roc = roc_auc_score(y_test,y_pred)
+print(" The confusion matrix based on Naives classifier is \n",cm)
+print(" The accuracy score: {} \n The F1_score: {} \n The precision score: {} \n The ROC: {}".format(asc,f1,prs,roc))
