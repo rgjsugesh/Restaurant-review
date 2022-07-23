@@ -1,5 +1,5 @@
 # Restaurant-review
-Restaurant review project in NLP using Naive Bayes classifier with comments
+Restaurant review project in NLP using Naive Bayes classifier with comments.
 The results obtained are
  The confusion matrix based on Naives classifier is 
  [[53 44]
